@@ -1,0 +1,1146 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+  <meta name="apple-mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+  <meta name="apple-mobile-web-app-title" content="ISAO Sim">
+  <meta name="theme-color" content="#0a1628">
+  <title>Simulateur ISC / ISAO</title>
+  <link rel="manifest" href="manifest.json">
+  <link href="https://fonts.googleapis.com/css2?family=Oswald:wght@300;400;500;600;700&family=Share+Tech+Mono&family=Rajdhani:wght@400;500;600;700&display=swap" rel="stylesheet">
+  <style>
+    :root {
+      --navy: #0a1628;
+      --navy2: #0f2040;
+      --blue: #1a3a6e;
+      --accent: #c8a84b;
+      --accent2: #e8c86a;
+      --red: #c0392b;
+      --green: #27ae60;
+      --green2: #2ecc71;
+      --text: #e8e8e8;
+      --text2: #a0aec0;
+      --border: rgba(200,168,75,0.25);
+      --card: rgba(15,32,64,0.85);
+      --input-bg: rgba(10,22,40,0.9);
+    }
+
+    * { box-sizing: border-box; margin: 0; padding: 0; -webkit-tap-highlight-color: transparent; }
+
+    body {
+      font-family: 'Rajdhani', sans-serif;
+      background: var(--navy);
+      color: var(--text);
+      min-height: 100vh;
+      min-height: -webkit-fill-available;
+      overflow-x: hidden;
+    }
+
+    /* Background grid effect */
+    body::before {
+      content: '';
+      position: fixed;
+      inset: 0;
+      background-image:
+        linear-gradient(rgba(200,168,75,0.04) 1px, transparent 1px),
+        linear-gradient(90deg, rgba(200,168,75,0.04) 1px, transparent 1px);
+      background-size: 40px 40px;
+      pointer-events: none;
+      z-index: 0;
+    }
+
+    body::after {
+      content: '';
+      position: fixed;
+      top: -50%;
+      left: -20%;
+      width: 70%;
+      height: 70%;
+      background: radial-gradient(ellipse, rgba(26,58,110,0.5) 0%, transparent 70%);
+      pointer-events: none;
+      z-index: 0;
+    }
+
+    /* HEADER */
+    header {
+      position: relative;
+      z-index: 10;
+      background: linear-gradient(180deg, rgba(10,22,40,0.98) 0%, rgba(10,22,40,0.92) 100%);
+      border-bottom: 2px solid var(--accent);
+      padding: 16px 20px 12px;
+      padding-top: calc(16px + env(safe-area-inset-top));
+    }
+
+    .header-badge {
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+      background: rgba(200,168,75,0.15);
+      border: 1px solid var(--accent);
+      border-radius: 3px;
+      padding: 2px 10px;
+      font-family: 'Share Tech Mono', monospace;
+      font-size: 10px;
+      color: var(--accent);
+      letter-spacing: 2px;
+      margin-bottom: 8px;
+    }
+
+    .header-badge::before {
+      content: '●';
+      font-size: 8px;
+      animation: blink 1.5s infinite;
+      color: var(--green2);
+    }
+
+    @keyframes blink { 0%,100%{opacity:1} 50%{opacity:0.3} }
+
+    h1 {
+      font-family: 'Oswald', sans-serif;
+      font-size: 22px;
+      font-weight: 700;
+      letter-spacing: 3px;
+      text-transform: uppercase;
+      color: var(--text);
+      line-height: 1.1;
+    }
+
+    h1 span { color: var(--accent); }
+
+    .header-sub {
+      font-family: 'Share Tech Mono', monospace;
+      font-size: 10px;
+      color: var(--text2);
+      letter-spacing: 1px;
+      margin-top: 3px;
+    }
+
+    /* NAV TABS */
+    .nav-tabs {
+      position: relative;
+      z-index: 10;
+      display: flex;
+      background: rgba(10,22,40,0.97);
+      border-bottom: 1px solid var(--border);
+    }
+
+    .nav-tab {
+      flex: 1;
+      padding: 12px 4px;
+      text-align: center;
+      font-family: 'Oswald', sans-serif;
+      font-size: 12px;
+      letter-spacing: 1.5px;
+      font-weight: 500;
+      color: var(--text2);
+      cursor: pointer;
+      transition: all 0.2s;
+      border-bottom: 3px solid transparent;
+      text-transform: uppercase;
+      user-select: none;
+    }
+
+    .nav-tab.active {
+      color: var(--accent);
+      border-bottom-color: var(--accent);
+      background: rgba(200,168,75,0.06);
+    }
+
+    .nav-tab:active { background: rgba(200,168,75,0.1); }
+
+    /* PAGES */
+    .page { display: none; position: relative; z-index: 1; }
+    .page.active { display: block; }
+
+    .container {
+      padding: 16px;
+      max-width: 480px;
+      margin: 0 auto;
+      padding-bottom: calc(24px + env(safe-area-inset-bottom));
+    }
+
+    /* SECTION TITLE */
+    .section-title {
+      font-family: 'Oswald', sans-serif;
+      font-size: 11px;
+      font-weight: 600;
+      letter-spacing: 3px;
+      text-transform: uppercase;
+      color: var(--accent);
+      margin: 20px 0 10px;
+      display: flex;
+      align-items: center;
+      gap: 8px;
+    }
+
+    .section-title::after {
+      content: '';
+      flex: 1;
+      height: 1px;
+      background: var(--border);
+    }
+
+    /* CARD */
+    .card {
+      background: var(--card);
+      border: 1px solid var(--border);
+      border-radius: 6px;
+      padding: 16px;
+      margin-bottom: 12px;
+      backdrop-filter: blur(10px);
+      -webkit-backdrop-filter: blur(10px);
+    }
+
+    .card-corner {
+      position: relative;
+    }
+
+    .card-corner::before,
+    .card-corner::after {
+      content: '';
+      position: absolute;
+      width: 12px;
+      height: 12px;
+      border-color: var(--accent);
+      border-style: solid;
+    }
+
+    .card-corner::before {
+      top: 0; left: 0;
+      border-width: 2px 0 0 2px;
+    }
+
+    .card-corner::after {
+      bottom: 0; right: 0;
+      border-width: 0 2px 2px 0;
+    }
+
+    /* FORM ELEMENTS */
+    .form-group { margin-bottom: 14px; }
+
+    label {
+      display: block;
+      font-family: 'Share Tech Mono', monospace;
+      font-size: 10px;
+      letter-spacing: 2px;
+      color: var(--text2);
+      margin-bottom: 6px;
+      text-transform: uppercase;
+    }
+
+    select, input[type="date"], input[type="time"] {
+      width: 100%;
+      background: var(--input-bg);
+      border: 1px solid var(--border);
+      border-radius: 4px;
+      color: var(--text);
+      font-family: 'Rajdhani', sans-serif;
+      font-size: 16px;
+      font-weight: 500;
+      padding: 11px 14px;
+      appearance: none;
+      -webkit-appearance: none;
+      outline: none;
+      transition: border-color 0.2s;
+      color-scheme: dark;
+    }
+
+    select { background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='8' viewBox='0 0 12 8'%3E%3Cpath fill='%23c8a84b' d='M6 8L0 0h12z'/%3E%3C/svg%3E"); background-repeat: no-repeat; background-position: right 14px center; padding-right: 36px; }
+
+    select:focus, input:focus {
+      border-color: var(--accent);
+      box-shadow: 0 0 0 2px rgba(200,168,75,0.15);
+    }
+
+    /* TOGGLE SWITCH */
+    .toggle-row {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      padding: 10px 0;
+      border-bottom: 1px solid rgba(200,168,75,0.08);
+    }
+
+    .toggle-row:last-child { border-bottom: none; }
+
+    .toggle-label {
+      font-size: 14px;
+      font-weight: 600;
+      letter-spacing: 0.5px;
+      flex: 1;
+      padding-right: 12px;
+      line-height: 1.3;
+    }
+
+    .toggle-label small {
+      display: block;
+      font-size: 11px;
+      font-weight: 400;
+      color: var(--text2);
+      letter-spacing: 0;
+      margin-top: 1px;
+    }
+
+    .toggle {
+      position: relative;
+      width: 50px;
+      height: 28px;
+      flex-shrink: 0;
+    }
+
+    .toggle input { opacity: 0; width: 0; height: 0; }
+
+    .toggle-slider {
+      position: absolute;
+      cursor: pointer;
+      inset: 0;
+      background: rgba(255,255,255,0.08);
+      border: 1px solid var(--border);
+      border-radius: 28px;
+      transition: 0.3s;
+    }
+
+    .toggle-slider::before {
+      content: '';
+      position: absolute;
+      width: 20px;
+      height: 20px;
+      left: 3px;
+      top: 3px;
+      background: var(--text2);
+      border-radius: 50%;
+      transition: 0.3s;
+    }
+
+    .toggle input:checked + .toggle-slider {
+      background: rgba(200,168,75,0.25);
+      border-color: var(--accent);
+    }
+
+    .toggle input:checked + .toggle-slider::before {
+      transform: translateX(22px);
+      background: var(--accent);
+    }
+
+    /* DATE GRID */
+    .date-grid {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 10px;
+    }
+
+    /* CALCULATE BUTTON */
+    .btn-calc {
+      width: 100%;
+      background: linear-gradient(135deg, var(--accent) 0%, var(--accent2) 100%);
+      color: var(--navy);
+      border: none;
+      border-radius: 5px;
+      padding: 16px;
+      font-family: 'Oswald', sans-serif;
+      font-size: 16px;
+      font-weight: 700;
+      letter-spacing: 3px;
+      text-transform: uppercase;
+      cursor: pointer;
+      transition: all 0.2s;
+      margin-top: 8px;
+      box-shadow: 0 4px 20px rgba(200,168,75,0.3);
+    }
+
+    .btn-calc:active {
+      transform: scale(0.98);
+      box-shadow: 0 2px 10px rgba(200,168,75,0.2);
+    }
+
+    /* RESULTS */
+    #results { display: none; }
+
+    .warning-box {
+      background: rgba(192,57,43,0.1);
+      border: 1px solid rgba(192,57,43,0.4);
+      border-left: 4px solid var(--red);
+      border-radius: 4px;
+      padding: 10px 14px;
+      font-size: 12px;
+      color: #e8a09a;
+      line-height: 1.5;
+      margin-bottom: 14px;
+      font-style: italic;
+    }
+
+    .result-grid {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 10px;
+      margin-bottom: 12px;
+    }
+
+    .result-card {
+      background: rgba(10,22,40,0.9);
+      border: 1px solid var(--border);
+      border-radius: 6px;
+      padding: 14px 12px;
+      text-align: center;
+    }
+
+    .result-card.highlight {
+      border-color: var(--accent);
+      background: rgba(200,168,75,0.08);
+    }
+
+    .result-card .result-label {
+      font-family: 'Share Tech Mono', monospace;
+      font-size: 9px;
+      letter-spacing: 2px;
+      color: var(--text2);
+      text-transform: uppercase;
+      margin-bottom: 6px;
+    }
+
+    .result-card .result-value {
+      font-family: 'Oswald', sans-serif;
+      font-size: 22px;
+      font-weight: 600;
+      color: var(--text);
+      line-height: 1;
+    }
+
+    .result-card .result-unit {
+      font-family: 'Share Tech Mono', monospace;
+      font-size: 10px;
+      color: var(--text2);
+      margin-top: 3px;
+    }
+
+    .result-card.highlight .result-value { color: var(--accent2); }
+
+    .gain-card {
+      background: rgba(39,174,96,0.1);
+      border: 1px solid rgba(39,174,96,0.4);
+      border-radius: 6px;
+      padding: 16px;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      margin-bottom: 12px;
+    }
+
+    .gain-card .gain-label {
+      font-family: 'Oswald', sans-serif;
+      font-size: 13px;
+      letter-spacing: 1px;
+      text-transform: uppercase;
+      color: var(--green2);
+    }
+
+    .gain-card .gain-label small {
+      display: block;
+      font-family: 'Rajdhani', sans-serif;
+      font-size: 11px;
+      font-weight: 400;
+      letter-spacing: 0;
+      color: rgba(46,204,113,0.6);
+      text-transform: none;
+      margin-top: 2px;
+    }
+
+    .gain-card .gain-value {
+      font-family: 'Oswald', sans-serif;
+      font-size: 28px;
+      font-weight: 700;
+      color: var(--green2);
+    }
+
+    .gain-card.negative {
+      background: rgba(192,57,43,0.1);
+      border-color: rgba(192,57,43,0.4);
+    }
+
+    .gain-card.negative .gain-label,
+    .gain-card.negative .gain-value { color: #e74c3c; }
+
+    .detail-row {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      padding: 8px 0;
+      border-bottom: 1px solid rgba(200,168,75,0.07);
+      font-size: 13px;
+    }
+
+    .detail-row:last-child { border-bottom: none; }
+
+    .detail-row .detail-key {
+      color: var(--text2);
+      font-weight: 500;
+    }
+
+    .detail-row .detail-val {
+      font-family: 'Share Tech Mono', monospace;
+      font-size: 13px;
+      color: var(--text);
+      font-weight: 600;
+    }
+
+    .alert-box {
+      background: rgba(192,57,43,0.15);
+      border: 1px solid rgba(192,57,43,0.5);
+      border-radius: 4px;
+      padding: 12px 16px;
+      font-size: 13px;
+      color: #e8a09a;
+      text-align: center;
+      font-weight: 600;
+      display: none;
+    }
+
+    /* TAUX TABLE PAGE */
+    .taux-table {
+      width: 100%;
+      border-collapse: collapse;
+      font-size: 12px;
+    }
+
+    .taux-table th {
+      background: rgba(200,168,75,0.15);
+      border: 1px solid var(--border);
+      padding: 7px 6px;
+      font-family: 'Share Tech Mono', monospace;
+      font-size: 9px;
+      letter-spacing: 1px;
+      color: var(--accent);
+      text-align: center;
+      text-transform: uppercase;
+    }
+
+    .taux-table td {
+      border: 1px solid rgba(200,168,75,0.1);
+      padding: 7px 6px;
+      text-align: center;
+      font-size: 12px;
+    }
+
+    .taux-table tr:nth-child(even) td {
+      background: rgba(15,32,64,0.5);
+    }
+
+    .taux-table td:first-child {
+      text-align: left;
+      font-weight: 600;
+      font-size: 11px;
+      color: var(--text2);
+      padding-left: 8px;
+    }
+
+    .taux-table td.isc {
+      color: var(--text2);
+    }
+
+    .taux-table td.isao {
+      color: var(--accent2);
+      font-weight: 600;
+    }
+
+    .taux-table td.isao-opcon {
+      color: var(--green2);
+      font-weight: 700;
+    }
+
+    .taux-header-group {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 6px;
+      margin-bottom: 10px;
+    }
+
+    .taux-legend {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 10px;
+      margin-bottom: 12px;
+      padding: 10px;
+      background: var(--card);
+      border: 1px solid var(--border);
+      border-radius: 5px;
+    }
+
+    .legend-item {
+      display: flex;
+      align-items: center;
+      gap: 6px;
+      font-size: 11px;
+    }
+
+    .legend-dot {
+      width: 10px;
+      height: 10px;
+      border-radius: 50%;
+      flex-shrink: 0;
+    }
+
+    /* MISSIONS PAGE */
+    .mission-item {
+      background: var(--card);
+      border: 1px solid var(--border);
+      border-radius: 5px;
+      padding: 12px 14px;
+      margin-bottom: 8px;
+      display: flex;
+      gap: 12px;
+      align-items: flex-start;
+    }
+
+    .mission-code {
+      font-family: 'Share Tech Mono', monospace;
+      font-size: 10px;
+      color: var(--accent);
+      background: rgba(200,168,75,0.1);
+      border: 1px solid var(--border);
+      border-radius: 3px;
+      padding: 3px 6px;
+      white-space: nowrap;
+      flex-shrink: 0;
+    }
+
+    .mission-info { flex: 1; }
+
+    .mission-short {
+      font-weight: 700;
+      font-size: 14px;
+      margin-bottom: 3px;
+    }
+
+    .mission-long {
+      font-size: 11px;
+      color: var(--text2);
+      line-height: 1.4;
+    }
+
+    .mission-type {
+      display: inline-block;
+      font-family: 'Share Tech Mono', monospace;
+      font-size: 9px;
+      padding: 2px 6px;
+      border-radius: 2px;
+      margin-top: 5px;
+      letter-spacing: 1px;
+    }
+
+    .mission-type.MISSOPS {
+      background: rgba(200,168,75,0.15);
+      color: var(--accent);
+      border: 1px solid rgba(200,168,75,0.3);
+    }
+
+    .mission-type.MISSINT {
+      background: rgba(39,174,96,0.15);
+      color: var(--green2);
+      border: 1px solid rgba(39,174,96,0.3);
+    }
+
+    /* Scroll */
+    ::-webkit-scrollbar { width: 4px; }
+    ::-webkit-scrollbar-track { background: transparent; }
+    ::-webkit-scrollbar-thumb { background: var(--border); border-radius: 2px; }
+
+    /* Animations */
+    @keyframes fadeIn {
+      from { opacity: 0; transform: translateY(10px); }
+      to { opacity: 1; transform: translateY(0); }
+    }
+
+    .fade-in { animation: fadeIn 0.3s ease forwards; }
+
+    .error-input { border-color: var(--red) !important; }
+
+    input[type="date"]::-webkit-calendar-picker-indicator,
+    input[type="time"]::-webkit-calendar-picker-indicator {
+      filter: invert(70%) sepia(50%) saturate(400%) hue-rotate(0deg);
+      opacity: 0.8;
+    }
+  </style>
+</head>
+<body>
+
+<header>
+  <div class="header-badge">ARMÉE FRANÇAISE • SIMULATION</div>
+  <h1>SIMULATEUR <span>ISC/ISAO</span></h1>
+  <div class="header-sub">INDEMNITÉS DE SUJÉTION • V2025 • RÉSULTAT NON CONTRACTUEL</div>
+</header>
+
+<nav class="nav-tabs">
+  <div class="nav-tab active" onclick="showTab('calc')">⚙ CALCUL</div>
+  <div class="nav-tab" onclick="showTab('taux')">📊 TAUX</div>
+  <div class="nav-tab" onclick="showTab('missions')">🎯 MISSIONS</div>
+</nav>
+
+<!-- PAGE CALCUL -->
+<div class="page active" id="page-calc">
+  <div class="container">
+
+    <div class="section-title">Situation du militaire</div>
+
+    <div class="card card-corner">
+      <div class="form-group">
+        <label>Grade</label>
+        <select id="grade">
+          <option value="">-- Sélectionner --</option>
+          <optgroup label="Militaires du rang">
+            <option value="ELEVE OFFICIER">Élève officier</option>
+            <option value="MDR">MDR (Militaire du Rang)</option>
+            <option value="CAPORAL">Caporal</option>
+            <option value="CAPORAL CHEF">Caporal-Chef</option>
+          </optgroup>
+          <optgroup label="Sous-officiers">
+            <option value="SERGENT">Sergent</option>
+            <option value="SERGENT-CHEF">Sergent-Chef</option>
+            <option value="ADJUDANT">Adjudant</option>
+            <option value="ADJUDANT-CHEF">Adjudant-Chef</option>
+            <option value="MAJOR">Major</option>
+          </optgroup>
+          <optgroup label="Officiers">
+            <option value="ASPIRANT">Aspirant</option>
+            <option value="SOUS-LIEUTENANT">Sous-Lieutenant</option>
+            <option value="LIEUTENANT">Lieutenant</option>
+            <option value="CAPITAINE">Capitaine</option>
+            <option value="COMMANDANT">Commandant</option>
+            <option value="LIEUTENANT COLONEL">Lieutenant-Colonel</option>
+            <option value="COLONEL">Colonel</option>
+            <option value="GENERAL">Général</option>
+          </optgroup>
+        </select>
+      </div>
+
+      <div class="toggle-row">
+        <div class="toggle-label">
+          Chargé de famille
+          <small>Marié / PACS / enfants à charge</small>
+        </div>
+        <label class="toggle">
+          <input type="checkbox" id="famille">
+          <span class="toggle-slider"></span>
+        </label>
+      </div>
+
+      <div class="toggle-row">
+        <div class="toggle-label">
+          Mission sous OPCON
+          <small>Contrôle opérationnel (voir onglet Missions)</small>
+        </div>
+        <label class="toggle">
+          <input type="checkbox" id="opcon">
+          <span class="toggle-slider"></span>
+        </label>
+      </div>
+
+      <div class="toggle-row">
+        <div class="toggle-label">
+          Hors territoire d'affectation
+          <small>Déploiement hors garnison</small>
+        </div>
+        <label class="toggle">
+          <input type="checkbox" id="hors_terr">
+          <span class="toggle-slider"></span>
+        </label>
+      </div>
+    </div>
+
+    <div class="section-title">Période d'activité</div>
+
+    <div class="card">
+      <div class="date-grid">
+        <div class="form-group">
+          <label>Date début</label>
+          <input type="date" id="date_debut">
+        </div>
+        <div class="form-group">
+          <label>Heure début</label>
+          <input type="time" id="heure_debut" value="08:00">
+        </div>
+      </div>
+      <div class="date-grid">
+        <div class="form-group">
+          <label>Date fin</label>
+          <input type="date" id="date_fin">
+        </div>
+        <div class="form-group">
+          <label>Heure fin</label>
+          <input type="time" id="heure_fin" value="12:00">
+        </div>
+      </div>
+    </div>
+
+    <div class="alert-box" id="alert-box"></div>
+
+    <button class="btn-calc" onclick="calculer()">⚡ CALCULER</button>
+
+    <!-- RESULTS -->
+    <div id="results">
+      <div class="section-title">Résultats</div>
+
+      <div class="warning-box">
+        ⚠ Le résultat obtenu n'est qu'une simulation et ne peut ouvrir aucun droit.
+      </div>
+
+      <div class="result-grid">
+        <div class="result-card">
+          <div class="result-label">Durée totale</div>
+          <div class="result-value" id="res-duree">—</div>
+          <div class="result-unit">heures</div>
+        </div>
+        <div class="result-card">
+          <div class="result-label">Nb taux ISC</div>
+          <div class="result-value" id="res-nb-isc">—</div>
+          <div class="result-unit">jour(s)</div>
+        </div>
+      </div>
+
+      <div class="result-grid">
+        <div class="result-card">
+          <div class="result-label">Taux/jour ISC</div>
+          <div class="result-value" id="res-taux-isc">—</div>
+          <div class="result-unit">€ brut</div>
+        </div>
+        <div class="result-card highlight">
+          <div class="result-label">Taux/jour ISAO</div>
+          <div class="result-value" id="res-taux-isao">—</div>
+          <div class="result-unit">€ brut</div>
+        </div>
+      </div>
+
+      <div class="card card-corner">
+        <div class="detail-row">
+          <span class="detail-key">Total ISC brut</span>
+          <span class="detail-val" id="res-total-isc">—</span>
+        </div>
+        <div class="detail-row">
+          <span class="detail-key">Total ISAO brut</span>
+          <span class="detail-val" id="res-total-isao">—</span>
+        </div>
+        <div class="detail-row">
+          <span class="detail-key">Nb taux ISAO</span>
+          <span class="detail-val" id="res-nb-isao">—</span>
+        </div>
+      </div>
+
+      <div class="gain-card" id="gain-card">
+        <div class="gain-label">
+          Gain ISAO vs ISC
+          <small>Bénéfice de la mise en œuvre</small>
+        </div>
+        <div class="gain-value" id="res-gain">—</div>
+      </div>
+    </div>
+
+  </div>
+</div>
+
+<!-- PAGE TAUX -->
+<div class="page" id="page-taux">
+  <div class="container">
+    <div class="section-title">Tableau des taux journaliers</div>
+
+    <div class="taux-legend">
+      <div class="legend-item"><div class="legend-dot" style="background:#a0aec0"></div><span>ISC (Célibataire / Marié)</span></div>
+      <div class="legend-item"><div class="legend-dot" style="background:#c8a84b"></div><span>ISAO sans OPCON</span></div>
+      <div class="legend-item"><div class="legend-dot" style="background:#2ecc71"></div><span>ISAO sous OPCON</span></div>
+    </div>
+
+    <div style="overflow-x:auto">
+    <table class="taux-table">
+      <thead>
+        <tr>
+          <th rowspan="3">Grade</th>
+          <th colspan="2">ISC</th>
+          <th colspan="4">ISAO — sans OPCON</th>
+          <th colspan="4">ISAO — sous OPCON</th>
+        </tr>
+        <tr>
+          <th colspan="2"></th>
+          <th colspan="2">Sur terr.</th>
+          <th colspan="2">Hors terr.</th>
+          <th colspan="2">Sur terr.</th>
+          <th colspan="2">Hors terr.</th>
+        </tr>
+        <tr>
+          <th>Célib.</th><th>Chargé</th>
+          <th>Célib.</th><th>Chargé</th>
+          <th>Célib.</th><th>Chargé</th>
+          <th>Célib.</th><th>Chargé</th>
+          <th>Célib.</th><th>Chargé</th>
+        </tr>
+      </thead>
+      <tbody id="taux-tbody"></tbody>
+    </table>
+    </div>
+  </div>
+</div>
+
+<!-- PAGE MISSIONS -->
+<div class="page" id="page-missions">
+  <div class="container">
+    <div class="section-title">Missions reconnues sous OPCON</div>
+    <div id="missions-list"></div>
+  </div>
+</div>
+
+<script>
+// ============================================================
+// DATA
+// ============================================================
+const TAUX = {
+  'ELEVE OFFICIER': { isc: [34.04, 42.55], isao_st: [39, 48], isao_ht: [49, 58], isao_opcon_st: [50, 59], isao_opcon_ht: [74, 83] },
+  'MDR':            { isc: [34.04, 42.55], isao_st: [39, 48], isao_ht: [49, 58], isao_opcon_st: [50, 59], isao_opcon_ht: [74, 83] },
+  'CAPORAL':        { isc: [34.04, 42.55], isao_st: [39, 48], isao_ht: [49, 58], isao_opcon_st: [50, 59], isao_opcon_ht: [74, 83] },
+  'CAPORAL CHEF':   { isc: [41.96, 52.45], isao_st: [47, 57], isao_ht: [57, 67], isao_opcon_st: [58, 68], isao_opcon_ht: [82, 92] },
+  'SERGENT':        { isc: [41.96, 52.45], isao_st: [49, 59], isao_ht: [59, 69], isao_opcon_st: [60, 70], isao_opcon_ht: [84, 94] },
+  'SERGENT-CHEF':   { isc: [41.96, 52.45], isao_st: [49, 59], isao_ht: [59, 69], isao_opcon_st: [60, 70], isao_opcon_ht: [84, 94] },
+  'ADJUDANT':       { isc: [50.59, 63.25], isao_st: [56, 68], isao_ht: [66, 78], isao_opcon_st: [67, 79], isao_opcon_ht: [91, 103] },
+  'ADJUDANT-CHEF':  { isc: [50.59, 63.25], isao_st: [56, 68], isao_ht: [66, 78], isao_opcon_st: [67, 79], isao_opcon_ht: [91, 103] },
+  'MAJOR':          { isc: [50.59, 63.25], isao_st: [56, 68], isao_ht: [66, 78], isao_opcon_st: [67, 79], isao_opcon_ht: [91, 103] },
+  'ASPIRANT':       { isc: [61.63, 77.05], isao_st: [67, 82], isao_ht: [77, 92], isao_opcon_st: [78, 93], isao_opcon_ht: [102, 117] },
+  'SOUS-LIEUTENANT':{ isc: [61.63, 77.05], isao_st: [67, 82], isao_ht: [77, 92], isao_opcon_st: [78, 93], isao_opcon_ht: [102, 117] },
+  'LIEUTENANT':     { isc: [61.63, 77.05], isao_st: [67, 82], isao_ht: [77, 92], isao_opcon_st: [78, 93], isao_opcon_ht: [102, 117] },
+  'CAPITAINE':      { isc: [61.63, 77.05], isao_st: [67, 82], isao_ht: [77, 92], isao_opcon_st: [78, 93], isao_opcon_ht: [102, 117] },
+  'COMMANDANT':     { isc: [73.42, 91.80], isao_st: [78, 97], isao_ht: [88, 107], isao_opcon_st: [89, 108], isao_opcon_ht: [113, 132] },
+  'LIEUTENANT COLONEL': { isc: [73.42, 91.80], isao_st: [78, 97], isao_ht: [88, 107], isao_opcon_st: [89, 108], isao_opcon_ht: [113, 132] },
+  'COLONEL':        { isc: [73.42, 91.80], isao_st: [78, 97], isao_ht: [88, 107], isao_opcon_st: [89, 108], isao_opcon_ht: [113, 132] },
+  'GENERAL':        { isc: [73.42, 91.80], isao_st: [78, 97], isao_ht: [88, 107], isao_opcon_st: [89, 108], isao_opcon_ht: [113, 132] },
+};
+
+const MISSIONS = [
+  { code:'MO001', short:'Projection de force', long:'Projection de force (dont aérotransport et soutien opérationnel)', type:'MISSOPS' },
+  { code:'MO002', short:'MCD forces de souveraineté', long:'Mission de courte durée en renfort des forces armées dans les DOM-COM', type:'MISSOPS' },
+  { code:'MO003', short:'Coopé Interna / Partena MIL OP', long:'Coopération internationale et détachements de partenariat militaire opérationnel', type:'MISSOPS' },
+  { code:'MO004', short:'Lutte cyberdéfense', long:'Lutte cyberdéfense', type:'MISSOPS' },
+  { code:'MO005', short:'Missions recueil renseignement', long:'Missions de recueil de renseignement (y compris à partir du territoire national)', type:'MISSOPS' },
+  { code:'MO006', short:'Compo nav, aéro dissu NUC', long:'Déploiement des composantes navale et aéroportée de la dissuasion nucléaire', type:'MISSOPS' },
+  { code:'MO007', short:'Renf. structure CDT OPEX s/ TN', long:"Renfort de la structure de commandement d'une opération extérieure depuis le territoire national", type:'MISSOPS' },
+  { code:'MO008', short:'S/S MAR, SEC Zone /voies COM', long:'Surveillance et sauvegarde maritime, sécurisation de zone ou de voies de communication maritime', type:'MISSOPS' },
+  { code:'MO009', short:'Missions perma ou Opé sur TN', long:'Missions permanentes ou opérations sur le territoire national', type:'MISSOPS' },
+  { code:'CO324', short:'HEPHAISTOS', long:'HEPHAISTOS', type:'MISSINT' },
+  { code:'CO345', short:'HARPIE', long:'HARPIE', type:'MISSINT' },
+  { code:'CO347', short:'TITAN', long:'TITAN', type:'MISSINT' },
+  { code:'CO373', short:'SENTINELLE', long:'SENTINELLE', type:'MISSINT' },
+  { code:'CO388', short:'RESILIENCE', long:'RESILIENCE', type:'MISSINT' },
+];
+
+// ============================================================
+// CALCUL
+// ============================================================
+function calculer() {
+  clearErrors();
+  const grade = document.getElementById('grade').value;
+  const famille = document.getElementById('famille').checked;
+  const opcon = document.getElementById('opcon').checked;
+  const hors_terr = document.getElementById('hors_terr').checked;
+  const date_debut = document.getElementById('date_debut').value;
+  const heure_debut = document.getElementById('heure_debut').value;
+  const date_fin = document.getElementById('date_fin').value;
+  const heure_fin = document.getElementById('heure_fin').value;
+
+  let errors = [];
+  if (!grade) errors.push('Veuillez sélectionner un grade.');
+  if (!date_debut) errors.push('Veuillez saisir une date de début.');
+  if (!date_fin) errors.push('Veuillez saisir une date de fin.');
+  if (date_debut && date_fin && new Date(date_fin + 'T' + heure_fin) < new Date(date_debut + 'T' + heure_debut)) {
+    errors.push('La date de fin doit être après la date de début.');
+  }
+
+  if (errors.length) {
+    const ab = document.getElementById('alert-box');
+    ab.textContent = errors.join(' ');
+    ab.style.display = 'block';
+    return;
+  }
+
+  const dt_debut = new Date(date_debut + 'T' + heure_debut);
+  const dt_fin = new Date(date_fin + 'T' + heure_fin);
+  const dureeHeures = (dt_fin - dt_debut) / 3600000;
+
+  // Durée display
+  const h = Math.floor(dureeHeures);
+  const m = Math.round((dureeHeures - h) * 60);
+
+  // ISC: nombre de taux (jours) — nécessite > 36h ET calcul par date début/fin tx
+  // DD tx ISC: si heure début < 23h ou (=23h et min=0) → même jour, sinon +1
+  let ddTxISC = new Date(dt_debut);
+  if (dt_debut.getHours() > 23 || (dt_debut.getHours() === 23 && dt_debut.getMinutes() > 0)) {
+    ddTxISC.setDate(ddTxISC.getDate() + 1);
+  }
+  // DF tx ISC
+  let dfTxISC;
+  if (dt_fin.getHours() >= 5) {
+    dfTxISC = new Date(date_fin);
+  } else {
+    dfTxISC = new Date(date_fin);
+    dfTxISC.setDate(dfTxISC.getDate() - 1);
+  }
+  // if fin > debut: dfTxISC+1
+  if (dt_fin > dt_debut) {
+    // déjà géré
+  }
+
+  // Nb taux ISC
+  let nbTauxISC;
+  const toDate = d => new Date(d.getFullYear(), d.getMonth(), d.getDate());
+  if (dureeHeures <= 36) {
+    nbTauxISC = '< à 36 heures !';
+  } else {
+    nbTauxISC = dateDiff(toDate(ddTxISC), toDate(dfTxISC)) + 1;
+  }
+
+  // ISAO: dd tx = même si heure<23, +1 si heure>=23 et min>0
+  let ddTxISAO = new Date(dt_debut);
+  if (dt_debut.getHours() < 23 || (dt_debut.getHours() === 23 && dt_debut.getMinutes() === 0)) {
+    ddTxISAO = new Date(date_debut);
+  } else {
+    ddTxISAO = new Date(date_debut);
+    ddTxISAO.setDate(ddTxISAO.getDate() + 1);
+  }
+
+  // DF tx ISAO: si heure >= 5 → même jour, sinon -1
+  let dfTxISAO = new Date(date_fin);
+  if (dt_fin.getHours() < 5) {
+    dfTxISAO.setDate(dfTxISAO.getDate() - 1);
+  }
+
+  let nbTauxISAO;
+  if (dureeHeures <= 36) {
+    nbTauxISAO = '< à 36 heures !';
+  } else {
+    const d1 = toDate(ddTxISAO);
+    const d2 = toDate(dfTxISAO);
+    if (d1 <= d2) {
+      nbTauxISAO = dateDiff(d1, d2) + 1;
+    } else {
+      nbTauxISAO = 0;
+    }
+  }
+
+  // Taux
+  const idx = famille ? 1 : 0;
+  const t = TAUX[grade];
+  const tauxISC = t.isc[idx];
+
+  let tauxISAO;
+  if (!opcon && !hors_terr) tauxISAO = t.isao_st[idx];
+  else if (!opcon && hors_terr) tauxISAO = t.isao_ht[idx];
+  else if (opcon && !hors_terr) tauxISAO = t.isao_opcon_st[idx];
+  else tauxISAO = t.isao_opcon_ht[idx];
+
+  // Totaux
+  let totalISC = 0, totalISAO = 0;
+  if (nbTauxISC !== '< à 36 heures !') {
+    totalISC = parseFloat((tauxISC * nbTauxISC).toFixed(2));
+  }
+  if (nbTauxISAO !== '< à 36 heures !') {
+    totalISAO = parseFloat((tauxISAO * nbTauxISAO).toFixed(2));
+  }
+
+  const gain = parseFloat((totalISAO - totalISC).toFixed(2));
+
+  // Display
+  document.getElementById('res-duree').textContent = h + 'h' + (m > 0 ? m.toString().padStart(2,'0') : '00');
+  document.getElementById('res-nb-isc').textContent = nbTauxISC === '< à 36 heures !' ? '< 36h' : nbTauxISC;
+  document.getElementById('res-nb-isao').textContent = nbTauxISAO === '< à 36 heures !' ? '< 36h' : nbTauxISAO;
+  document.getElementById('res-taux-isc').textContent = tauxISC.toFixed(2);
+  document.getElementById('res-taux-isao').textContent = tauxISAO.toFixed(2);
+  document.getElementById('res-total-isc').textContent = nbTauxISC === '< à 36 heures !' ? '0,00 €' : formatEur(totalISC);
+  document.getElementById('res-total-isao').textContent = nbTauxISAO === '< à 36 heures !' ? '0,00 €' : formatEur(totalISAO);
+
+  const gainCard = document.getElementById('gain-card');
+  document.getElementById('res-gain').textContent = (gain >= 0 ? '+' : '') + formatEur(gain);
+  gainCard.className = 'gain-card' + (gain < 0 ? ' negative' : '');
+
+  const results = document.getElementById('results');
+  results.style.display = 'block';
+  results.classList.add('fade-in');
+  results.scrollIntoView({ behavior: 'smooth', block: 'start' });
+}
+
+function dateDiff(d1, d2) {
+  return Math.round((d2 - d1) / 86400000);
+}
+
+function formatEur(v) {
+  return v.toFixed(2).replace('.', ',') + ' €';
+}
+
+function clearErrors() {
+  document.getElementById('alert-box').style.display = 'none';
+  document.getElementById('results').style.display = 'none';
+}
+
+// ============================================================
+// TABS
+// ============================================================
+function showTab(tab) {
+  document.querySelectorAll('.nav-tab').forEach((el, i) => {
+    el.classList.toggle('active', ['calc','taux','missions'][i] === tab);
+  });
+  document.querySelectorAll('.page').forEach(el => el.classList.remove('active'));
+  document.getElementById('page-' + tab).classList.add('active');
+}
+
+// ============================================================
+// RENDER TAUX TABLE
+// ============================================================
+function renderTaux() {
+  const tbody = document.getElementById('taux-tbody');
+  tbody.innerHTML = '';
+  Object.entries(TAUX).forEach(([grade, t]) => {
+    const tr = document.createElement('tr');
+    tr.innerHTML = `
+      <td>${grade}</td>
+      <td class="isc">${t.isc[0]}</td>
+      <td class="isc">${t.isc[1]}</td>
+      <td class="isao">${t.isao_st[0]}</td>
+      <td class="isao">${t.isao_st[1]}</td>
+      <td class="isao">${t.isao_ht[0]}</td>
+      <td class="isao">${t.isao_ht[1]}</td>
+      <td class="isao-opcon">${t.isao_opcon_st[0]}</td>
+      <td class="isao-opcon">${t.isao_opcon_st[1]}</td>
+      <td class="isao-opcon">${t.isao_opcon_ht[0]}</td>
+      <td class="isao-opcon">${t.isao_opcon_ht[1]}</td>
+    `;
+    tbody.appendChild(tr);
+  });
+}
+
+// ============================================================
+// RENDER MISSIONS
+// ============================================================
+function renderMissions() {
+  const list = document.getElementById('missions-list');
+  list.innerHTML = '';
+  MISSIONS.forEach(m => {
+    list.innerHTML += `
+      <div class="mission-item">
+        <div class="mission-code">${m.code}</div>
+        <div class="mission-info">
+          <div class="mission-short">${m.short}</div>
+          <div class="mission-long">${m.long}</div>
+          <span class="mission-type ${m.type}">${m.type}</span>
+        </div>
+      </div>
+    `;
+  });
+}
+
+// ============================================================
+// INIT
+// ============================================================
+renderTaux();
+renderMissions();
+
+// Set today as default date
+const today = new Date().toISOString().split('T')[0];
+document.getElementById('date_debut').value = today;
+document.getElementById('date_fin').value = today;
+</script>
+</body>
+</html>
